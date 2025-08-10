@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+comfy-table = "7.1.4"
 dotenv = "0.15.0"
 sqlx = { version = "0.8.6", features = ["runtime-tokio", "postgres"]}
 tokio = { version = "1.47.1", features = ["full"]}
