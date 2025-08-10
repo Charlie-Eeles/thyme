@@ -33,22 +33,26 @@ async fn main() {
         }
     };
 
-     // TODO: Replace this hardcoded example, and test every query in a particular directory
-    let query: String = fs::read_to_string("./thyme_queries/example.sql") 
-        .await
-        .unwrap();
+    let mut dir = fs::read_dir("./thyme_queries").await.unwrap();
 
-    let mut query_execution_time_ms: u128 = 0;
-    let mut query_execution_time_sec = 0.0;
-    let query_start_time = Instant::now();
+    while let Some(entry) = dir.next_entry().await.unwrap() {
+        let query: String = fs::read_to_string(format!("{}", entry.path().display())) 
+            .await
+            .unwrap();
 
-    match sqlx::query(&query).fetch_all(&pg_pool).await {
-        Ok(_) => {
-            let elapsed_time = query_start_time.elapsed();
-            query_execution_time_ms = elapsed_time.as_millis();
-            query_execution_time_sec = (elapsed_time.as_secs_f64() * 100.0).round() / 100.0;
+        let mut query_execution_time_ms: u128 = 0;
+        let mut query_execution_time_sec = 0.0;
+        let query_start_time = Instant::now();
+
+        match sqlx::query(&query).fetch_all(&pg_pool).await {
+            Ok(_) => {
+                let elapsed_time = query_start_time.elapsed();
+                query_execution_time_ms = elapsed_time.as_millis();
+                query_execution_time_sec = (elapsed_time.as_secs_f64() * 100.0).round() / 100.0;
+            }
+            Err(_) => {}
         }
-        Err(_) => {}
+        // TODO: Clean up file name logic
+        println!("{}: {}ms | {} secs", entry.file_name().to_str().unwrap_or(""), query_execution_time_ms, query_execution_time_sec);
     }
-    println!("example.sql: {query_execution_time_ms}ms | {query_execution_time_sec} secs");
 }
