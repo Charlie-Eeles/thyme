@@ -1,6 +1,6 @@
 use std::cmp::Reverse;
 
-use comfy_table::Table;
+use comfy_table::{Cell, Table};
 use dotenv::dotenv;
 use sqlx::postgres::PgPoolOptions;
 use tokio::{fs, time::Instant};
@@ -63,7 +63,7 @@ async fn main() {
         .set_header(vec!["Query", "Duration"]);
 
     for el in res_vec {
-        table.add_row(vec![el.0, el.1.to_string()]);
+        table.add_row(vec![Cell::new(el.0).fg(comfy_table::Color::Blue), Cell::new(el.1).fg(comfy_table::Color::Green)]);
     }
 
     println!("{table}");
