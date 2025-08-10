@@ -1,7 +1,16 @@
 [package]
-name = "thyme"
+name = "thyme-sql"
 version = "0.1.0"
+authors = ["Charlie Eeles <charlie.eeles@gmail.com>"]
 edition = "2024"
+license = "MIT"
+description = "Performance benchmark tool for Postgres queries"
+repository = "https://github.com/Charlie-Eeles/thyme"
+
+[[bin]]
+bench = false
+name = "thyme"
+path = "src/main.rs"
 
 [dependencies]
 comfy-table = "7.1.4"
