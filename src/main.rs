@@ -36,11 +36,13 @@ async fn main() {
         }
     };
 
+    println!("Running queries...");
+
     let mut dir = fs::read_dir("./thyme_queries").await.unwrap();
 
     let mut res_vec: Vec<(String, u128)> = vec![];
     while let Some(entry) = dir.next_entry().await.unwrap() {
-        let query: String = fs::read_to_string(format!("{}", entry.path().display())) 
+        let query: String = fs::read_to_string(format!("{}", entry.path().display()))
             .await
             .unwrap();
 
@@ -50,8 +52,10 @@ async fn main() {
             Ok(_) => {
                 let elapsed_time = query_start_time.elapsed();
                 let query_execution_time_ms = elapsed_time.as_millis();
-                // query_execution_time_sec = (elapsed_time.as_millis() as f64) / 1000.0;
-                res_vec.push((String::from(entry.file_name().to_str().unwrap_or("")), query_execution_time_ms));
+                res_vec.push((
+                    String::from(entry.file_name().to_str().unwrap_or("")),
+                    query_execution_time_ms,
+                ));
             }
             Err(_) => {}
         }
@@ -59,11 +63,14 @@ async fn main() {
     res_vec.sort_by_key(|i| Reverse(i.1));
 
     let mut table = Table::new();
-    table
-        .set_header(vec!["Query", "Duration"]);
+    table.set_header(vec!["Query", "Duration (sec)", "Duration (ms)"]);
 
     for el in res_vec {
-        table.add_row(vec![Cell::new(el.0).fg(comfy_table::Color::Blue), Cell::new(el.1).fg(comfy_table::Color::Green)]);
+        table.add_row(vec![
+            Cell::new(el.0).fg(comfy_table::Color::Blue),
+            Cell::new((el.1 as f64) / 1000.0).fg(comfy_table::Color::Green),
+            Cell::new(el.1).fg(comfy_table::Color::Green),
+        ]);
     }
 
     println!("{table}");
