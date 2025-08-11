@@ -1,4 +1,5 @@
-use std::cmp::Reverse;
+use std::{cmp::Reverse};
+use clap::Parser;
 
 use comfy_table::{Cell, Table};
 use dotenv::dotenv;
@@ -15,10 +16,19 @@ fn get_env_var_or_exit(name: &str) -> String {
     }
 }
 
+#[derive(Parser, Debug)]
+#[command(version, about, long_about = None)]
+struct Args {
+    #[arg(short, long, default_value_t = String::from("./"))]
+    target: String,
+}
+
 #[tokio::main]
 async fn main() {
     dotenv().ok();
     let database_url = get_env_var_or_exit("DATABASE_URL");
+
+    let args = Args::parse();
 
     // TODO: Clean up these pool options
     let pg_pool = match PgPoolOptions::new()
@@ -38,10 +48,14 @@ async fn main() {
 
     println!("Running queries...");
 
-    let mut dir = fs::read_dir("./thyme_queries").await.unwrap();
+    let mut dir = fs::read_dir(args.target).await.unwrap();
 
     let mut res_vec: Vec<(String, u128)> = vec![];
     while let Some(entry) = dir.next_entry().await.unwrap() {
+        if !entry.file_name().to_str().unwrap_or("").ends_with(".sql") {
+            continue
+        }
+
         let query: String = fs::read_to_string(format!("{}", entry.path().display()))
             .await
             .unwrap();
@@ -60,6 +74,12 @@ async fn main() {
             Err(_) => {}
         }
     }
+    //TODO: Improve ordering of this, it should check this before even connecting to the db
+    if res_vec.len() == 0 {
+        println!("No queries found in directory.");
+        return;
+    }
+
     res_vec.sort_by_key(|i| Reverse(i.1));
 
     let mut table = Table::new();
